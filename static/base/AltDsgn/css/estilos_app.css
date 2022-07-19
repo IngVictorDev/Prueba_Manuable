@@ -1,0 +1,26 @@
+#contenedor_input_imagen{
+    position: relative;
+}
+
+.input_imagen{
+    position: absolute;
+    height: 150px;
+    width: 150px;
+    opacity: 0;
+    border-radius: 10%;
+    cursor: pointer;
+}
+
+.imagen_input{
+    height: 150px;
+    width: 150px;
+    /*font-size: 80px;*/
+    border-radius: 10%;
+    text-align: center;
+    background-color: #b3c1c047;
+}
+
+#icono_input_img{
+    height: 85px;
+    margin-top: 22%;
+}

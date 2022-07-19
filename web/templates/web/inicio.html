@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+{% load static %}
+<html>
+{% csrf_token %}
+<head>
+	<meta charset="utf-8">
+	<title>Nada</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+	<style type="text/css">
+		.pager-nav {
+			margin: 16px 0;
+		}
+		.pager-nav span {
+			display: inline-block;
+			padding: 4px 8px;
+			margin: 1px;
+			cursor: pointer;
+			font-size: 14px;
+			background-color: #FFFFFF;
+			border: 1px solid #e1e1e1;
+			border-radius: 3px;
+			box-shadow: 0 1px 1px rgba(0,0,0,.04);
+		}
+		.pager-nav span:hover,
+		.pager-nav .pg-selected {
+			background-color: #f9f9f9;
+			border: 1px solid #CCCCCC;
+		}
+	</style>	
+	<script type="text/javascript" src="{% static 'base/AltDsgn/js/jquery-3.4.1.min.js' %}"></script>
+
+	<script type="text/javascript">
+		function Pager(tableName, itemsPerPage) {
+      'use strict';
+
+      this.tableName = tableName;
+      this.itemsPerPage = itemsPerPage;
+      this.currentPage = 1;
+      this.pages = 0;
+      this.inited = false;
+
+      this.showRecords = function (from, to) {
+          let rows = document.getElementById(tableName).rows;
+
+          // i starts from 1 to skip table header row
+          for (let i = 0; i < rows.length; i++) {
+              if (i < from || i > to) {
+                  rows[i].style.display = 'none';
+              } else {
+                  rows[i].style.display = '';
+              }
+          }
+      };
+
+      this.showPage = function (pageNumber) {
+          if (!this.inited) {
+              // Not initialized
+              return;
+          }
+
+          let oldPageAnchor = document.getElementById('pg' + this.currentPage);
+          oldPageAnchor.className = 'pg-normal';
+
+          this.currentPage = pageNumber;
+          let newPageAnchor = document.getElementById('pg' + this.currentPage);
+          newPageAnchor.className = 'pg-selected';
+
+          let from = (pageNumber - 1) * itemsPerPage ;
+          let to = from + itemsPerPage - 1;
+          this.showRecords(from, to);
+
+          let pgNext = document.querySelector('.pg-next');
+          let pgPrev = document.querySelector('.pg-prev');
+
+          pgNext.style.display = '';
+          pgPrev.style.display = '';
+      };
+
+      this.prev = function () {
+          if (this.currentPage > 1) {
+              this.showPage(this.currentPage - 1);
+          }
+      };
+
+      this.next = function () {
+          console.log(this.currentPage);
+          console.log(this.pages);
+          if (this.currentPage < this.pages) {
+              this.showPage(this.currentPage + 1);
+          }
+      };
+
+      this.init = function () {
+          let rows = document.getElementById(tableName).rows;
+          let records = (rows.length - 1);
+
+          this.pages = Math.ceil(records / itemsPerPage);
+          console.log(this.pages);
+          this.inited = true;
+      };
+
+      this.showPageNav = function (pagerName, positionId) {
+          if (!this.inited) {
+              // Not initialized
+              return;
+          }
+
+          let element = document.getElementById(positionId),
+              pagerHtml = '<span onclick="' + pagerName + '.prev();" class="pg-normal pg-prev">&#171;</span>';
+
+          for (let page = 1; page <= this.pages; page++) {
+              pagerHtml += '<span id="pg' + page + '" class="pg-normal" onclick="' + pagerName + '.showPage(' + page + ');">' + page + '</span>';
+          }
+
+          pagerHtml += '<span onclick="' + pagerName + '.next();" class="pg-normal pg-next">&#187;</span>';
+
+          element.innerHTML = pagerHtml;
+      };
+    }
+	</script>
+
+	<script type="text/javascript">
+		var productos = {};
+		$(document).ready(function(){
+			getProducts();
+			function getProducts(){
+				var formData = new FormData();
+				var url = "{% url 'web:get_products' %}"
+				var crsftoken    = "{{csrf_token}}";
+				formData.append('csrfmiddlewaretoken',crsftoken);
+				
+				$.ajax({
+					url:url,
+					data:formData,
+					cache:false,
+					contentType:false,
+					processData:false,
+					type:'POST',
+					success:function(data_success){
+						productos = data_success.products;
+						var html = '';
+						console.log(productos)
+						for(producto in productos){
+							html += "<tr>"
+              html += "<td>"+productos[producto].name+"</td>"
+              html += "<td>"+productos[producto].price+"</td>"
+              html += "<td>"+productos[producto].sku+"</td>"
+              html += "<td>"+productos[producto].seasonal+"</td>"
+              html += "<td>"+productos[producto].quantity+"</td>"
+              html += "<td>"+productos[producto].category+"</td>"
+              html += "<td><div class='w3-bar'><button delete_product = 'false' id_product='"+producto+"' class='edit_product w3-bar-item w3-button w3-green'>Edit</button><button delete_product = 'true' id_prod='"+producto+"' class='save_product w3-bar-item w3-button w3-red'>Delete</button></div></td>";
+              html += "</tr>"
+						}
+						$('#tab_lista_productos').html(html);
+						let pager_resumen = new Pager('tab_lista_productos', 10);
+						pager_resumen.init();
+						pager_resumen.showPageNav('pager_resumen', 'paginador_resumen');
+						pager_resumen.showPage(1);
+						
+						console.log('Succes')
+						
+					},
+					error:function(data_error){
+						console.log('Error')
+					}
+				});
+			}
+			$(document).on('click','.edit_product',function(){
+				var id_product = $(this).attr('id_product');
+				$('#name_prod').val(productos[id_product].name)
+				$('#price_prod').val(productos[id_product].price)
+				$('#sku_prod').val(productos[id_product].sku)
+				$('#quantity_prod').val(productos[id_product].quantity)	
+				if (productos[id_product].seasonal == "YES"){
+					$("#check_yes").prop("checked", true);
+				}else{
+					$("#check_no").prop('checked', true);
+				}
+				$('#categorias_prod option:eq('+(productos[id_product].category_id - 1)+')').prop('selected', true)
+				$('#update_prod').attr('id_prod',id_product);
+				$('#save_prod').css('display','none');
+				$('#update_prod').css('display','block');
+
+			});	
+			
+			$(document).on('click','.save_product',function(){
+				//extraer datos y hacer el servicio web de guardado.
+				var data = {};
+				var alertas = '';
+				var id_product = $(this).attr('id_prod');
+				var del  = $(this).attr('delete_product');
+				var url = "{% url 'web:save_product' %}"
+				var formData = new FormData();
+				var crsftoken    = "{{csrf_token}}";
+				formData.append('csrfmiddlewaretoken',crsftoken);
+
+				if(del == 'true'){
+					formData.append('delete',true);
+				}else{ 
+					//campos inputs
+					$('.form_prod').each(function(){
+						data[$(this).attr('id')] = $(this).val()
+						if(data[$(this).attr('id')] == ""){
+							alertas+='<li class="list-group-item list-group-item-warning">&nbsp;&nbsp;'+$(this).attr("campo")+'</li>';
+						}
+					});
+					//radio estacional
+					if($('input:radio[name=estacional_prod]:checked').val() == '1'){
+						data['estacional_prod'] = true;
+					}else{
+						data['estacional_prod'] = false;
+					}
+				}
+				//save data
+				if(alertas == ''){
+					//guardar datos
+					
+					formData.append('data',JSON.stringify(data));
+					if(id_product != 'none'){
+						//significa que es solo actualizacion
+						formData.append('id_product',id_product);
+					}
+					$.ajax({
+						url:url,
+						data:formData,
+						cache:false,
+						contentType:false,
+						processData:false,
+						type:'POST',
+						success:function(data_success){
+							console.log('Echo')
+							window.location.reload();
+
+						},
+						error:function(data_error){
+							console.log('Error')
+						}
+					});
+				}else{
+					$('#body_alerta').html(alertas);
+					$('#id01').css('display','block');
+				}
+			});
+		});	
+	</script>
+
+</head>
+<body background="w3-d">
+<br>	
+<div class="w3-container ">
+
+	<div class="w3-bar w3-light-green">
+		<h2>&nbsp MY INVENTORY.</h2>
+	</div>
+	<br>
+	<div>
+		<div class="w3-container">
+			
+			<div class="row">
+				<div class="column">
+					<p>
+					<label>Name</label>
+					<input id="name_prod" campo = "Name" class="w3-input form_prod" type="text"></p>
+					<p>
+					<label>Price</label>
+					<input id="price_prod" campo = "Price" class="w3-input form_prod" type="text"></p>
+					<p>
+					<label>SKU</label>
+					<input id="sku_prod" campo = "SKU" class="w3-input form_prod" type="text"></p>
+					<p>
+					<label>Quantity</label>
+					<input id="quantity_prod" campo = "Quantity" class="w3-input form_prod" type="text"></p>
+					
+				</div>
+				<div class="column">	
+					<label>Seasonal?</label><br>
+					<input id="check_yes" type="radio" name="estacional_prod" value="1" checked="true">
+					<label for="estacional_prod">YES</label><br>
+
+					<input id="check_no" type="radio" name="estacional_prod" value="0">
+					<label for="estacional_prod">NO</label><br>
+					<br>
+					<label for="categoria">Category</label>
+					<br>
+					<select class="form-select form_prod" campo = "Category" name="categoria" id="categorias_prod">
+						{% for category in categories %}
+						<option value="{{ category.id }}">{{category.categoria}}</option>
+						{% endfor%}
+					</select>
+					<br>
+					<br>
+				</div>
+			</div>
+			
+
+			<p><button class="save_product w3-button w3-green" id="save_prod" id_prod = "none">Save</button></p>
+			<p><button style="display:none" class="save_product w3-button w3-green" id="update_prod" id_prod="">Update</button></p>
+			<br>
+
+
+			<br>
+		<div class="row">
+			<table class="table table-sm table-hover text-dark" style="margin:0px;">
+        <thead>
+          <th>Name</th>
+          <th>Price</th>
+          <th>SKU</th>
+          <th>seasonal</th>
+          <th>Quantity</th>
+          <th>Category</th>
+						<th></th>
+        </thead>
+        <tbody  id="tab_lista_productos">
+        </tbody>
+      </table>
+
+      <div class="column pager-nav" id="paginador_resumen">
+        <script type="text/javascript">
+            let pager_resumen = new Pager('tab_lista_productos', 10);
+            pager_resumen.init();
+            pager_resumen.showPageNav('pager_resumen', 'paginador_resumen');
+        </script>
+      </div><!-- row -->
+    </div>
+		</div>
+	</div>
+	<div>
+		<div id="id01" class="w3-modal">
+		  <div class="w3-modal-content">
+		    <div class="w3-container">
+		      	<span onclick="document.getElementById('id01').style.display='none'"
+		      class="w3-button w3-display-topright">&times;</span>
+				<div class="modal-header" style="display:;">
+				<h5 class="modal-title text-warning" id="headerModalWarning">Capos Requeridos</h5>
+				</div>
+				<div class="modal-body modal-body-warning" >
+					<ul  class="list-group" id="body_alerta">
+						
+					</ul>	
+				</div>
+				
+				
+		    </div>
+		  </div>
+		</div>
+	</div>
+
+
+</div>
+
+</body>
+</html>
