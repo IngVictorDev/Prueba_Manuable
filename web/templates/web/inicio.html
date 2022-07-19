@@ -85,7 +85,9 @@
       };
 
       this.next = function () {
-          
+      		let rows = document.getElementById(tableName).rows;
+          let records = (rows.length - 1);
+          this.pages = Math.ceil(records / itemsPerPage);
           if (this.currentPage < this.pages) {
               this.showPage(this.currentPage + 1);
           }
@@ -94,9 +96,7 @@
       this.init = function () {
           let rows = document.getElementById(tableName).rows;
           let records = (rows.length - 1);
-
           this.pages = Math.ceil(records / itemsPerPage);
-          
           this.inited = true;
       };
 
